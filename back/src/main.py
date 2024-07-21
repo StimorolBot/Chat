@@ -3,12 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html, get_swagger_ui_oauth2_redirect_html
 
 from src.app.chat.api_v1.router import chat_router
+from src.app.fast_register.api_v1.router import register_router
 
 app = FastAPI(title="chat", docs_url=None, redoc_url=None)
 
 app.include_router(chat_router)
+app.include_router(register_router)
 
-origins = ["http://localhost:5173/"]
+
+origins = ["http://localhost:5173"]
 
 app.add_middleware(
     CORSMiddleware,
