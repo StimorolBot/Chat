@@ -1,63 +1,37 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse
+from uuid import UUID
+from typing import Annotated
 
-from src.app.chat.connection_manager import manager
+from fastapi import (APIRouter, WebSocket, WebSocketDisconnect,
+                     Cookie, status, HTTPException)
+
 from src.core.logger import ws_logger
+from src.app.chat.connection_manager import manager
 
 chat_router = APIRouter(tags=["chat"])
 
-html = """
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Chat</title>
-    </head>
-    <body>
-        <h1>WebSocket Chat</h1>
-        <h2>Your ID: <span id="ws-id"></span></h2>
-        <form action="" onsubmit="sendMessage(event)">
-            <input type="text" id="messageText" autocomplete="off"/>
-            <button>Send</button>
-        </form>
-        <ul id='messages'>
-        </ul>
-        <script>
-            var client_id = Date.now()
-            document.querySelector("#ws-id").textContent = client_id;
-            var ws = new WebSocket(`ws://localhost:8000/ws/${client_id}`);
-            ws.onmessage = function(event) {
-                var messages = document.getElementById('messages')
-                var message = document.createElement('li')
-                var content = document.createTextNode(event.data)
-                message.appendChild(content)
-                messages.appendChild(message)
-            };
-            function sendMessage(event) {
-                var input = document.getElementById("messageText")
-                ws.send(input.value)
-                input.value = ''
-                event.preventDefault()
-            }
-        </script>
-    </body>
-</html>
-"""
 
+@chat_router.websocket("/{user_id}")
+async def websocket_endpoint(
+        websocket: WebSocket, user_id: UUID,
+        user_cookie: Annotated[str | None, Cookie()] = None):
 
-@chat_router.get("/")
-async def get():
-    return HTMLResponse(html)
+    if not user_cookie:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Пользователь не авторизирован"
+        )
+    elif UUID(user_cookie) != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Не далось найти страницу"
+        )
 
-
-@chat_router.websocket("/ws/{client_id}")
-async def websocket_endpoint(websocket: WebSocket, client_id: int):
-    ws_logger.info(msg=f"{client_id = }")
+    ws_logger.info(msg=f"Подключился: {user_cookie}")
     await manager.connect(websocket)
     try:
         while True:
-            data = await websocket.receive_text()
-            await manager.send_personal_message(f"You wrote: {data}", websocket)
-            await manager.broadcast(f"Client #{client_id} says: {data}")
+            data = await websocket.receive_json()
+            await manager.send_personal_message(data["data"], data["id"], websocket)
     except WebSocketDisconnect:
         manager.disconnect(websocket)
-        await manager.broadcast(f"Client #{client_id} left the chat")
+
