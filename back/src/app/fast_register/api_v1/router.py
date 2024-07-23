@@ -22,5 +22,9 @@ async def register_user(user_create: CreateUser):
     return Response(
         status_code=status.HTTP_201_CREATED,
         detail="Пользователь успешно создан",
-        data={"user_id": user_id, "user_name": user_create.user_name}
+        data={
+            "user_id": user_id,
+            "user_name": user_create.user_name,
+            "ttl": ttl
+        }
     )
