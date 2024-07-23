@@ -32,7 +32,7 @@ export function Register() {
     }
     return(
         <section className="register">
-            <h2 className="register__title">
+            <h2 className="hidden__title">
                 Форма для регистрации
             </h2>
             <form className="register__form" action="" method="POST">
