@@ -34,4 +34,7 @@ class CustomLogger(ColoredFormatter):
 
 
 CustomLogger(loger_name="ws_logger", path="../back/log/ws.log")
+CustomLogger(loger_name="user_logger", path="../back/log/user.log")
+
 ws_logger = logging.getLogger("ws_logger")
+user_logger = logging.getLogger("user_logger")
