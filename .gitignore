@@ -5,3 +5,4 @@ poetry.lock
 __pycache__
 script.py.mako
 log
+node_modules
