@@ -14,14 +14,22 @@ from src.app.chat.connection_manager import manager
 chat_router = APIRouter(tags=["chat"])
 
 
+@chat_router.get("/")
+async def get_user_info(user_cookie: Annotated[str, Cookie()] = None):
+    if not user_cookie:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Пользователь не авторизирован")
+    user_info = await get_redis(user_cookie)
+    return Response(status_code=status.HTTP_200_OK, detail="Информация пользователя", data=user_info)
+
+
 @chat_router.post("/")
-async def add_chat(search: AddChat) -> Response:
+async def add_chat(search: AddChat, user_cookie: Annotated[str | None, Cookie()] = None) -> Response:
     search_user = await get_redis(str(search.user_id))
-    if not search.cookies:
+    if not user_cookie:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Пользователь не авторизирован")
     elif not search_user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Пользователь не найден")
-    search_user["chat"].append(search.cookies)
+    search_user["chat"].append(user_cookie)
     await set_redis(str(search.user_id), search_user, 1800)  # исправить ttl
     return Response(status_code=status.HTTP_200_OK, detail="Чат найден")
 
