@@ -1,7 +1,6 @@
 import "./style/search_user.sass"
 
 import api from "../../../config/api"
-import cookies from "../../../config/cookies"
 import { SearchInput } from "../ui/input/SearchInput"
 import { useRef } from "react"
 
@@ -12,10 +11,7 @@ export function SearchUser() {
     const search = async (event) => {
         event.preventDefault()
 
-        await api.post("/", {
-            "user_id":"d00dcadb-e4ae-4982-9cc1-a7fa7cb3df64",
-            "cookies":cookies.get("user_cookie")
-            }).
+        await api.post("/", {"user_id": searchRef.current.value}).
             then(( response )=>{
                 console.log(response.data)
             }).
@@ -34,7 +30,6 @@ export function SearchUser() {
                     <img className="" src="/public/icon/search.svg" alt="Поиск" />
                 </button>
             </form>
-            
         </section>
     )
 }
