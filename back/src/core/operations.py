@@ -12,7 +12,7 @@ def get_seconds(minutes: int) -> int:
     return int(timedelta(minutes=minutes).total_seconds())
 
 
-async def set_redis(name: str, data: dict, ttl: int):
+async def set_redis(name: str, data: dict, ttl: int = 1800): # исправить ttl
     data_str = json.dumps(data)
     await redis.set(name=name, value=data_str, ex=ttl)
 
@@ -22,3 +22,7 @@ async def get_redis(key: str) -> dict | None:
     if not data_dict:
         return None
     return json.loads(data_dict)
+
+
+async def save_msg():
+    ...

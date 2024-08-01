@@ -29,8 +29,8 @@ export function SearchUser({userInfo, setUserInfo }) {
         <section className="search-user">
             <h2 className="hidden__title">Поиск пользователей</h2>
             <form className="search-user-form" action="/" method="POST">
-                <SearchInput innerRef={ searchRef }/>
                 <SearchBtn search={ search } />
+                <SearchInput innerRef={ searchRef }/>
             </form>
         </section>
     )

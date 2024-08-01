@@ -7,7 +7,7 @@ export function MainInput({id, lblTitle, ...props}){
     return(
         <>
             <input className={isActive ? "main-input_active" : "main-input"}
-                id={ id } { ...props }  
+                id={ id } { ...props } autoComplete="off"
             />
             <label className={isActive ? "main-lbl_active" : "main-lbl"} htmlFor={ id }
                 onClick={() => setIsActive(state => !state)}>

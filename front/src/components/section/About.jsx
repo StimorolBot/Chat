@@ -7,7 +7,9 @@ export function About({userId}) {
         <section className="about">
             <h2 className="hidden__title">Об аккаунте</h2>
             <div className="wrapper">
-                <h3>#{userId}</h3>
+                <h3 className="about__user-id">
+                    #{ userId }
+                </h3>
             </div>
         </section>
     )

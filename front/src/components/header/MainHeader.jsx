@@ -1,12 +1,13 @@
 import "./style/main_header.sass"
 
 
-export function MainHeader() {
-    // document.querySelector("#ws-id").textContent = client_id;
+export function MainHeader({ userName }) {
 
     return(
         <header className="header">
-             <h2>Your ID: <span id="ws-id"></span></h2>
+            <h3 className="header__user">
+                { userName }
+            </h3>
         </header>
     )
 }
