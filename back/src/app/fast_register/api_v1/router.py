@@ -16,17 +16,16 @@ async def register_user(user_create: CreateUser, response: Response) -> Response
     user_id = generate_uuid()
     ttl = get_seconds(minutes=user_create.ttl)
     user_logger.info(f"Пользователь '{user_id}' создан")
+
     await set_redis(
-        name=user_id,
-        data={"user_id": user_id, "chat": []},
-        ttl=ttl
+        name=user_id, ttl=ttl,
+        data={
+            "user_id": user_id, "user_name": user_create.user_name,
+            "chat_dict": {}
+        }
     )
-    response.set_cookie(
-        key="user_cookie",
-        value=user_id,
-        samesite='none',
-        expires=ttl
-    )
+    response.set_cookie(key="user_cookie", value=user_id, samesite='none', expires=ttl)
+
     return ResponseSchema(
         status_code=status.HTTP_201_CREATED,
         detail="Пользователь успешно создан",
