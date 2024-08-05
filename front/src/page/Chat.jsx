@@ -1,6 +1,8 @@
 import "./style/chat.sass"
 
-import { useState } from "react"
+import api from "../../config/api"
+import { useNavigate } from "react-router-dom"
+import { useEffect, useState } from "react"
 import { MainAside } from "../components/aside/MainAside"
 import { MainHeader } from "../components/header/MainHeader"
 import { Message } from "../components/section/Message"
@@ -8,17 +10,60 @@ import { SendMessage } from "../components/section/SendMessage"
 
 
 export function Chat() {
-  const [msg, setMsg] = useState([])
 
+  const navigate = useNavigate()
+  const [msgSend, setMsgSend] = useState([])
+  const [userIdUrl, setUserIdUrl] = useState("")
+
+  const [userInfo, setUserInfo] = useState({
+    "userId": "", "userName": "",
+    "chatList": [], "msgList": []
+  })
+
+  useEffect(() => {(
+    async () => {
+        await api.get("/").then((response) => {
+            setUserInfo({
+                userId: response.data.data["user_id"],
+                chatList: Object.values(response.data.data["chat_dict"]),
+                msgList: response.data.data["msg_list"]
+            })
+        }).catch((error) =>{
+          if (error.response["status"] == 401){
+            navigate("/register")
+          } 
+          else {
+            console.log(error)
+          }
+        })
+    })()
+  }, [])
+  
   return (  
-      <div className="wrapper wrapper-body">
-        <MainAside/>
+    <div className="wrapper wrapper-body">
+      <MainAside userId={ userInfo["userId"] }
+        chatList={ userInfo["chatList"] }
+        userInfo={ userInfo } 
+        setUserInfo={ setUserInfo } 
+        setUserIdUrl={ setUserIdUrl }
+      />
+
+      { userIdUrl.length != 0 ?
         <main className="main">
-          <MainHeader />
-          <Message msgList={ msg } />
-          <SendMessage msg={ msg } setMsg={ setMsg }/>
+          <MainHeader userName={userInfo["userName"]}/>
+          <Message msgs={ msgSend }
+            msgList={ userInfo["msgList"] }
+          />
+            
+          <SendMessage msgSend={ msgSend }
+            setMsgSend={ setMsgSend }
+            userIdUrl={ userIdUrl }
+          />
         </main>
-      </div>
+      : <div className="empty-chat">
+          Сообщений пока нет
+        </div>
+      }
+    </div>
   )
 }
-
