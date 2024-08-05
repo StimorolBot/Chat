@@ -24,5 +24,12 @@ async def get_redis(key: str) -> dict | None:
     return json.loads(data_dict)
 
 
-async def save_msg():
-    ...
+async def save_msg(user_id: str, msg: str, msg_id: int):
+    user = await get_redis(user_id)
+    chat_id = user["chat_dict"].get(user_id)
+    if not chat_id:
+        raise KeyError(f"Не удалось найти чат для: {user_id}")
+
+    chat = await get_redis(chat_id)
+    chat[chat_id].append({"user_id": user_id, "id": msg_id, "msg": msg})
+    await set_redis(chat_id, chat)
