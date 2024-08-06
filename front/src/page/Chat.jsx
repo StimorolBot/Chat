@@ -12,7 +12,7 @@ import { SendMessage } from "../components/section/SendMessage"
 export function Chat() {
 
   const navigate = useNavigate()
-  const [msgSend, setMsgSend] = useState([])
+  const [msgSend, setMsgSend] = useState(null)
   const [userIdUrl, setUserIdUrl] = useState("")
 
   const [userInfo, setUserInfo] = useState({
@@ -23,11 +23,11 @@ export function Chat() {
   useEffect(() => {(
     async () => {
         await api.get("/").then((response) => {
-            setUserInfo({
-                userId: response.data.data["user_id"],
-                chatList: Object.values(response.data.data["chat_dict"]),
-                msgList: response.data.data["msg_list"]
-            })
+          setUserInfo({
+            userId: response.data.data["user_id"],
+            chatList: Object.values(response.data.data["chat_dict"]),
+            msgList: response.data.data["msg_list"]?.["data"]["msg"]
+          })
         }).catch((error) =>{
           if (error.response["status"] == 401){
             navigate("/register")
@@ -38,7 +38,7 @@ export function Chat() {
         })
     })()
   }, [])
-  
+ 
   return (  
     <div className="wrapper wrapper-body">
       <MainAside userId={ userInfo["userId"] }
@@ -51,7 +51,7 @@ export function Chat() {
       { userIdUrl.length != 0 ?
         <main className="main">
           <MainHeader userName={userInfo["userName"]}/>
-          <Message msgs={ msgSend }
+          <Message msg={ msgSend }
             msgList={ userInfo["msgList"] }
           />
             

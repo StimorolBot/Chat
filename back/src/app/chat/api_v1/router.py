@@ -20,6 +20,7 @@ async def get_cookie(user_cookie: Annotated[str, Cookie()] = None) -> str:
 
 
 @chat_router.get("/msg")
+@cache(namespace="msg", expire=120)
 async def get_msg(user_cookie: str = Depends(get_cookie)) -> Response:
     user_info = await get_redis(user_cookie)
     chat_id_list = user_info["chat_dict"]
@@ -32,7 +33,10 @@ async def get_msg(user_cookie: str = Depends(get_cookie)) -> Response:
 @chat_router.get("/")
 async def get_user_info(user_cookie: str = Depends(get_cookie), msg: Response | None = Depends(get_msg)) -> Response:
     user_info = await get_redis(user_cookie)
-    return Response(status_code=status.HTTP_200_OK, detail="Информация о пользователе", data=user_info)
+    return Response(
+        status_code=status.HTTP_200_OK, detail="Информация о пользователе",
+        data={**user_info, "msg_list": msg}
+    )
 
 
 @chat_router.post("/")
