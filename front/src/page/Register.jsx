@@ -11,13 +11,11 @@ import { useNavigate } from "react-router-dom"
 
 export function Register() {
     const navigate = useNavigate()
-    const [userData, setUserData] = useState([{
-        "user_name": "","ttl": ""
-    }])
+    const [userData, setUserData] = useState([{ "user_name": "","ttl": "" }])
 
     const sendData = async (event) => {
         event.preventDefault()
-        await api.post("/register", userData).then((response) => {
+        await api.post("/register/", userData).then((response) => {
             cookies.set(
                 "user_cookie", response.data.data["user_id"],
                 {
