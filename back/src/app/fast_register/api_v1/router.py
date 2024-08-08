@@ -1,30 +1,31 @@
 from fastapi import APIRouter, status, Response
 
 from src.core.logger import user_logger
-from src.core.operations import set_redis
 from src.core.response import Response as ResponseSchema
-from src.core.operations import generate_uuid, get_seconds
+
+from src.core.operations import generate_uuid
+from src.core.operations import set_redis, set_limit_request
 
 from src.app.fast_register.schema import CreateUser
 
 register_router = APIRouter(prefix="/register", tags=["register"])
 
 
-# ограничить количество запросов
 @register_router.post("/")
+@set_limit_request(time_limit=30, max_calls=3)
 async def register_user(user_create: CreateUser, response: Response) -> ResponseSchema:
     user_id = generate_uuid()
-    ttl = get_seconds(minutes=user_create.ttl)
     user_logger.info(f"Пользователь '{user_id}' создан")
 
     await set_redis(
-        name=user_id, ttl=ttl,
+        name=user_id, ttl=user_create.ttl,
         data={
             "user_id": user_id, "user_name": user_create.user_name,
             "chat_dict": {}
         }
     )
-    response.set_cookie(key="user_cookie", value=user_id, samesite='none', expires=ttl)
+    # исправить
+    response.set_cookie(key="user_cookie", value=user_id, samesite='none', expires=user_create.ttl)
 
     return ResponseSchema(
         status_code=status.HTTP_201_CREATED,
@@ -32,6 +33,6 @@ async def register_user(user_create: CreateUser, response: Response) -> Response
         data={
             "user_id": user_id,
             "user_name": user_create.user_name,
-            "ttl": ttl
+            "ttl": user_create.ttl
         }
     )
