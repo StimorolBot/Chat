@@ -1,10 +1,11 @@
 from typing import Annotated
 
-from src.core.logger import ws_logger
+from src.core.logger import user_logger
 from src.core.response import Response
 from src.core.operations import set_redis, get_redis, generate_uuid, save_msg
 
-from src.app.chat.schema import AddUser
+from src.core.validator import ValidId
+from src.app.chat.schema import SearchUser
 from src.app.chat.connection_manager import manager
 
 from fastapi_cache.decorator import cache
@@ -13,35 +14,35 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Cookie, status, H
 chat_router = APIRouter(tags=["chat"])
 
 
-async def get_cookie(user_cookie: Annotated[str, Cookie()] = None) -> str:
+async def get_cookie(user_cookie: Annotated[ValidId, Cookie()] = None) -> str:
+    user_logger.debug(f"{user_cookie=}")
     if not user_cookie:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Пользователь не авторизирован")
     return user_cookie
 
 
-@chat_router.get("/msg")
-@cache(namespace="msg", expire=120)
-async def get_msg(user_cookie: str = Depends(get_cookie)) -> Response:
+@chat_router.get("/")
+async def get_user_info(user_cookie: str = Depends(get_cookie)) -> Response:
+    user_info = await get_redis(user_cookie)
+    user_logger.debug(f"{user_info=}")
+    return Response(status_code=status.HTTP_200_OK, detail="Информация о пользователе", data=user_info)
+
+
+@chat_router.get("/chat/{chat_id}")
+@cache(namespace="msg", expire=360)
+async def get_msg(chat_id: ValidId, user_cookie: str = Depends(get_cookie)) -> Response:
     user_info = await get_redis(user_cookie)
     chat_id_list = user_info["chat_dict"]
+
     if chat_id_list:
         chat_id = chat_id_list.get(user_cookie)
         chat = await get_redis(chat_id)
         return Response(status_code=status.HTTP_200_OK, detail="История сообщений", data={"msg": chat[chat_id]})
 
 
-@chat_router.get("/")
-async def get_user_info(user_cookie: str = Depends(get_cookie), msg: Response | None = Depends(get_msg)) -> Response:
-    user_info = await get_redis(user_cookie)
-    return Response(
-        status_code=status.HTTP_200_OK, detail="Информация о пользователе",
-        data={**user_info, "msg_list": msg}
-    )
-
-
 @chat_router.post("/")
-async def add_chat(chat: AddUser, user_cookie: str = Depends(get_cookie)) -> Response:
-    user = await get_redis(str(chat.user_id))
+async def add_chat(chat: SearchUser, user_cookie: str = Depends(get_cookie)) -> Response:
+    user = await get_redis(chat.user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Пользователь не найден")
     elif user_cookie in user["chat_dict"]:
@@ -57,14 +58,13 @@ async def add_chat(chat: AddUser, user_cookie: str = Depends(get_cookie)) -> Res
     await set_redis(chat.user_id, user)
     await set_redis(chat_id, {chat_id: []})
 
-    return Response(status_code=status.HTTP_200_OK,
-                    data={"chat_id": chat.user_id, "chat_name": chat.user_name},
-                    detail="Чат добавлен")
+    return Response(status_code=status.HTTP_201_CREATED,
+                    data={"chat_id": chat.user_id, "chat_name": user["user_name"]},
+                    detail="Чат успешно создан")
 
 
 @chat_router.websocket("/{chat_id}")
-async def websocket_endpoint(websocket: WebSocket, chat_id: str, user_cookie: str = Depends(get_cookie)):
-    ws_logger.info(msg=f"Подключился: {user_cookie}")
+async def websocket_endpoint(websocket: WebSocket, chat_id: ValidId, user_cookie: str = Depends(get_cookie)):
     await manager.connect(user_cookie, websocket)
     try:
         while True:
