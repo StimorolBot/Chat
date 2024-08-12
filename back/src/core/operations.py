@@ -31,15 +31,17 @@ async def get_redis(key: str) -> dict | None:
     return json.loads(data_dict)
 
 
-async def save_msg(user_id: str, msg: str, msg_id: int):
+async def save_msg(user_id: str, chat_id: str, msg: str, msg_id: int):
     user = await get_redis(user_id)
-    chat_id = user["chat_dict"].get(user_id)
-    if not chat_id:
+    chat_uuid = user["chat_dict"].get(chat_id)
+    if not chat_uuid:
+        user_logger.error(f"Не удалось найти чат для: {user_id}")
         raise KeyError(f"Не удалось найти чат для: {user_id}")
 
-    chat = await get_redis(chat_id)
-    chat[chat_id].append({"user_id": user_id, "id": msg_id, "msg": msg})
-    await set_redis(chat_id, chat)
+    chat = await get_redis(chat_uuid)
+    chat[chat_uuid].append({"user_id": user_id, "id": msg_id, "msg": msg})
+    await set_redis(chat_uuid, chat)
+    user_logger.debug(f"Сообщение '{msg}' сохранено в {chat_uuid}")
 
 
 def set_limit_request(time_limit: int, max_calls: int):
@@ -48,7 +50,6 @@ def set_limit_request(time_limit: int, max_calls: int):
 
         @wraps(func)
         async def wrapper(*args, **kwargs):
-            print(args, kwargs)
             time_now = time.time()
             calls_in_time_limit = [call for call in calls_list if call > time_now - time_limit]
             if len(calls_in_time_limit) >= max_calls:
