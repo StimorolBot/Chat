@@ -21,7 +21,7 @@ async def register_user(user_create: CreateUser, response: Response) -> Response
         name=user_id, ttl=user_create.ttl,
         data={
             "user_id": user_id, "user_name": user_create.user_name,
-            "chat_dict": {}
+            "chat_dict": {}, "chat_list": []
         }
     )
     # исправить
