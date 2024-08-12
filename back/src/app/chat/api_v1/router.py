@@ -25,7 +25,13 @@ async def get_cookie(user_cookie: Annotated[ValidId, Cookie()] = None) -> str:
 async def get_user_info(user_cookie: str = Depends(get_cookie)) -> Response:
     user_info = await get_redis(user_cookie)
     user_logger.debug(f"{user_info=}")
-    return Response(status_code=status.HTTP_200_OK, detail="Информация о пользователе", data=user_info)
+    try:
+        return Response(
+            status_code=status.HTTP_200_OK, detail="Информация о пользователе",
+            data={"user_id": user_info.get("user_id"), "chat_list": user_info.get("chat_list")})
+    except AttributeError as e:
+        user_logger.error(f"Внутренняя ошибка сервера: {e}")
+        return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Внутренняя ошибка сервера")
 
 
 @chat_router.get("/chat/{chat_id}")
@@ -35,9 +41,9 @@ async def get_msg(chat_id: ValidId, user_cookie: str = Depends(get_cookie)) -> R
     chat_id_list = user_info["chat_dict"]
 
     if chat_id_list:
-        chat_id = chat_id_list.get(user_cookie)
-        chat = await get_redis(chat_id)
-        return Response(status_code=status.HTTP_200_OK, detail="История сообщений", data={"msg": chat[chat_id]})
+        chat_uuid = chat_id_list.get(chat_id)
+        chat = await get_redis(chat_uuid)
+        return Response(status_code=status.HTTP_200_OK, detail="История сообщений", data={"msg": chat[chat_uuid]})
 
 
 @chat_router.post("/")
@@ -49,14 +55,18 @@ async def add_chat(chat: SearchUser, user_cookie: str = Depends(get_cookie)) -> 
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Чат уже добавлен")
 
     chat_id = generate_uuid()
-    user["chat_dict"][chat.user_id] = chat_id
+    user["chat_dict"][user_cookie] = chat_id
 
     cookie = await get_redis(user_cookie)
-    cookie["chat_dict"][user_cookie] = chat_id
+    cookie["chat_dict"][chat.user_id] = chat_id
+
+    cookie["chat_list"].append({"chat_name": user["user_name"], "chat_id": chat.user_id})
+    user["chat_list"].append({"chat_name": cookie["user_name"], "chat_id": user_cookie})
 
     await set_redis(user_cookie, cookie)
     await set_redis(chat.user_id, user)
     await set_redis(chat_id, {chat_id: []})
+    user_logger.debug(f"{chat_id=}")
 
     return Response(status_code=status.HTTP_201_CREATED,
                     data={"chat_id": chat.user_id, "chat_name": user["user_name"]},
@@ -70,6 +80,6 @@ async def websocket_endpoint(websocket: WebSocket, chat_id: ValidId, user_cookie
         while True:
             data = await websocket.receive_json()
             await manager.send_personal_message(data["data"], chat_id)
-            await save_msg(user_cookie, msg=data["data"], msg_id=data["id"])
+            await save_msg(user_id=user_cookie, chat_id=chat_id, msg=data["data"], msg_id=data["id"])
     except WebSocketDisconnect:
         manager.disconnect(user_cookie)
