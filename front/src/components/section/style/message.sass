@@ -3,13 +3,26 @@
     height: 500px
     border-radius: 15px
     overflow-x: scroll
+    padding: 20px
 
 #msg__container
     display: flex
     flex-direction: column
+    gap: 10px
+    
+.msg__item,
+.msg__item_other
+    border-radius: 12px
+    padding: 4px
+    
 
 .msg__item
     align-self: flex-end
+    background-color: #07478e
+
+.msg__item_other
+    align-self: flex-start
+    background-color: #856bcc
 
 .msg__none
     align-self: center
