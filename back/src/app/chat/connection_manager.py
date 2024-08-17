@@ -1,6 +1,6 @@
 from typing import Dict
 from fastapi import WebSocket
-from src.core.logger import ws_logger
+from src.core.logger_conf import ws_logger
 
 
 class ConnectionManager:
