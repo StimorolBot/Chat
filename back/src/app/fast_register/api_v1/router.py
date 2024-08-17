@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status, Response
 
-from src.core.logger import user_logger
+from src.core.logger_conf import user_logger
 from src.core.response import Response as ResponseSchema
 
 from src.core.operations import generate_uuid
