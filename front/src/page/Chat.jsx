@@ -10,26 +10,20 @@ import { SendMessage } from "../components/section/SendMessage"
 
 
 export function Chat() {
-
   const navigate = useNavigate()
-  const [msgSend, setMsgSend] = useState(null)
-  const [userIdUrl, setUserIdUrl] = useState("")
-
-  const [userInfo, setUserInfo] = useState({
-    "userId": "", "userName": "",
-    "chatList": [], "msgList": []
-  })
-
+  
+  const [msg, setMsg] = useState([])
+  const [userId, setUerId] = useState("")
+  const [userIdUrl, setUserIdUrl] = useState("/")
+  const [chatList, setChatList] = useState([])
+  
   useEffect(() => {(
     async () => {
         await api.get("/").then((response) => {
-          setUserInfo({
-            userId: response.data.data["user_id"],
-            chatList: Object.values(response.data.data["chat_dict"]),
-            msgList: response.data.data["msg_list"]?.["data"]["msg"]
-          })
+          setUerId(response.data.data["user_id"])
+          setChatList([...response.data.data["chat_list"]])
         }).catch((error) =>{
-          if (error.response["status"] == 401){
+          if (error.response?.["status"] == 401){
             navigate("/register")
           } 
           else {
@@ -37,32 +31,27 @@ export function Chat() {
           }
         })
     })()
+    
+    if (window.location.pathname != "/"){
+      setUserIdUrl(window.location.pathname)
+    }         
   }, [])
- 
+
   return (  
     <div className="wrapper wrapper-body">
-      <MainAside userId={ userInfo["userId"] }
-        chatList={ userInfo["chatList"] }
-        userInfo={ userInfo } 
-        setUserInfo={ setUserInfo } 
+      <MainAside userId={ userId }
+        chatList={ chatList }
+        setChatList = { setChatList } 
         setUserIdUrl={ setUserIdUrl }
+        setMsg={ setMsg }
       />
 
-      { userIdUrl.length != 0 ?
+      { userIdUrl.length != 1 &&
         <main className="main">
-          <MainHeader userName={userInfo["userName"]}/>
-          <Message msg={ msgSend }
-            msgList={ userInfo["msgList"] }
-          />
-            
-          <SendMessage msgSend={ msgSend }
-            setMsgSend={ setMsgSend }
-            userIdUrl={ userIdUrl }
-          />
+          <MainHeader userName={"sss"}/>
+          <Message msg={ msg }/>
+          <SendMessage userIdUrl={ userIdUrl }/>
         </main>
-      : <div className="empty-chat">
-          Сообщений пока нет
-        </div>
       }
     </div>
   )
