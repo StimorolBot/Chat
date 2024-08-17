@@ -8,6 +8,10 @@ const router = createBrowserRouter([
     {
       path: "/",
       element: <Chat/>,
+      children: [{
+        path: ":id",
+        element: <Chat/>,
+      }]  
     },
     {
       path: "/register",
