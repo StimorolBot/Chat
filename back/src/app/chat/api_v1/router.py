@@ -1,7 +1,8 @@
 from typing import Annotated
 
-from src.core.logger import user_logger
 from src.core.response import Response
+from src.rmq.publisher import publisher
+from src.core.logger_conf import user_logger
 from src.core.operations import set_redis, get_redis, generate_uuid, save_msg
 
 from src.core.validator import ValidId
@@ -31,6 +32,7 @@ async def get_user_info(user_cookie: str = Depends(get_cookie)) -> Response:
             data={"user_id": user_info.get("user_id"), "chat_list": user_info.get("chat_list")})
     except AttributeError as e:
         user_logger.error(f"Внутренняя ошибка сервера: {e}")
+        await publisher(f"Error: INTERNAL SERVER ERROR: {e}.\n User cookie: {user_cookie}".encode())
         return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Внутренняя ошибка сервера")
 
 
