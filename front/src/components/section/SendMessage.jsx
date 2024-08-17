@@ -15,10 +15,11 @@ export function SendMessage({ userIdUrl }) {
         let messages = document.getElementById("msg__container")
         let message = document.createElement('li')
         let content = document.createTextNode(msg)
+        message.className = "msg__item"
         message.appendChild(content)
         messages.appendChild(message)
     }
-    
+
     const ws = new WebSocket(`http://localhost:8000${userIdUrl}`)
     
     ws.onopen = function(e) { console.log("соединение установлено") }
