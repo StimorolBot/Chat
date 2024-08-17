@@ -8,7 +8,7 @@ from fastapi import HTTPException, status
 
 from src.config import redis
 from src.config import fast_register
-from src.core.logger import user_logger
+from src.core.logger_conf import user_logger
 
 
 def generate_uuid() -> str:
