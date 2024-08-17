@@ -1,8 +1,11 @@
 import "./style/message.sass"
 
+import cookies from "../../../config/cookies"
+
 
 export function Message({ msg }){
-    
+    const cookieUuid = cookies.get("user_cookie")
+
     return(
         <section className="section-message">
             <h2 className="hidden__title">
@@ -13,13 +16,15 @@ export function Message({ msg }){
                 { msg !== undefined ?
                     msg.map((m, i) => {
                         return(
-                        <li className="msg__item" key={ i }>{                   
-                            m["msg"]
-                        }</li>)        
-                    })
-                : <h3 className="msg__none">
-                    Сообщений нет
-                </h3>
+                            <li className={ cookieUuid == m["user_id"]
+                                ? "msg__item"
+                                : "msg__item_other"} key={ i }>
+                                { m["msg"] }
+                            </li>)        
+                         })
+                    : <h3 className="msg__none">
+                        Сообщений нет
+                    </h3>
                 }
                 </ul>
             </div>
