@@ -1,3 +1,4 @@
+import os
 import logging
 
 
@@ -33,8 +34,13 @@ class CustomLogger(ColoredFormatter):
         self.logger.addHandler(self.file_log)
 
 
-CustomLogger(loger_name="ws_logger", path="../back/log/ws.log")
-CustomLogger(loger_name="user_logger", path="../back/log/user.log")
+PATH = f"{os.path.dirname(os.path.abspath(__file__))}/../../log"
+
+CustomLogger(loger_name="ws_logger", path=f"{PATH}/ws.log")
+CustomLogger(loger_name="user_logger", path=f"{PATH}/user.log")
+CustomLogger(loger_name="rmq_logger", path=f"{PATH}/rmq.log")
 
 ws_logger = logging.getLogger("ws_logger")
 user_logger = logging.getLogger("user_logger")
+rmq_logger = logging.getLogger("rmq_logger")
+
