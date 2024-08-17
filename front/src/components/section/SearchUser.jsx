@@ -6,7 +6,7 @@ import { SearchBtn } from "../ui/btn/SearchBtn"
 import { SearchInput } from "../ui/input/SearchInput"
 
 
-export function SearchUser({userInfo, setUserInfo }) {
+export function SearchUser({chatList, setChatList }) {
     let searchRef = useRef("")
 
     const search = async (event) => {
@@ -14,12 +14,8 @@ export function SearchUser({userInfo, setUserInfo }) {
 
         await api.post("/", {"user_id": searchRef.current.value}).
             then(( response )=>{
-                setUserInfo({
-                    ...userInfo,
-                    chatList: [...userInfo["chatList"], response.data.data["chat_id"]]
-                })
-            }).
-            catch((error) => {
+                setChatList([...chatList, response.data.data["chat_id"]])
+            }).catch((error) => {
                 console.log(error)
             })
             searchRef.current.value = ""

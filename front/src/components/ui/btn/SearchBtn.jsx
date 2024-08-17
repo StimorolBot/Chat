@@ -1,5 +1,3 @@
-import "./style/search_btn.sass"
-
 export function SearchBtn ({ search }) {
     return(
         <button className="search-btn" onClick={(event) => search(event)}>
